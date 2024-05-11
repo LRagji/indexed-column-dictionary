@@ -1,6 +1,7 @@
 import { IIndexableValue } from "./i-indexable-value";
+import { IIndexedColumnDictionary } from "./i-indexed-column-dictionary";
 
-export class MemoryICD {
+export class MemoryICD implements IIndexedColumnDictionary {
 
     private rowCounter = 0;
     private readonly table = new Map<number, IIndexableValue<unknown>[]>();
@@ -8,7 +9,7 @@ export class MemoryICD {
 
     constructor(private readonly columnsToIndex: number[]) { }
 
-    public upsert(row: IIndexableValue<unknown>[], rowId?: number) {
+    public async upsert(row: IIndexableValue<unknown>[], rowId?: number) {
         if (rowId === undefined) {
             rowId = this.rowCounter++;
         }
@@ -25,25 +26,29 @@ export class MemoryICD {
         }
     }
 
-    public get(rowId: number): IIndexableValue<unknown>[] | undefined {
+    public async get(rowId: number): Promise<IIndexableValue<unknown>[] | undefined> {
         return this.table.get(rowId);
     }
 
-    public getByIndexedColumn(indexCol: number, indexKey: string): Set<number> | undefined {
-        return this.indexes.get(indexCol)?.get(indexKey);
+    public async getByIndexedColumn<T>(indexCol: number, indexKey: string, mapper: (keys: Set<number>) => Promise<T>): Promise<T | undefined> {
+        const keys = this.indexes.get(indexCol)?.get(indexKey);
+        if (keys === undefined) {
+            return undefined;
+        }
+        return mapper(keys);
     }
 
     public async *getAll(indicativeSize: number = 1): AsyncGenerator<[number, IIndexableValue<unknown>[]][], void, void> {
-        let returnArray = new Array<[number, IIndexableValue<unknown>[]]>(indicativeSize);
+        let returnArray = new Array<[number, IIndexableValue<unknown>[]]>();
         for (const [key, values] of this.table) {
             returnArray.push([key, values]);
             if (returnArray.length === indicativeSize) {
-                yield await Promise.resolve(returnArray);
+                yield Promise.resolve(returnArray);
                 returnArray = [];
             }
         }
         if (returnArray.length > 0) {
-            yield await Promise.resolve(returnArray);
+            yield Promise.resolve(returnArray);
             returnArray = [];
         }
     }
