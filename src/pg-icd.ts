@@ -8,36 +8,83 @@ export class PGICD implements IIndexedColumnDictionary {
     // private readonly indexes = new Map<number, Map<string, Set<number>>>();
 
     constructor(
-        private readonly queryExecutor: <returnType>(parameterizedSQLQuery: string, values: string | number[]) => returnType,
+        private readonly queryExecutor: <returnType>(parameterizedSQLQueries: string[], values: (string | number)[][]) => returnType,
         private readonly config: {
             tableName: string,
+            indexedTable: boolean,
             columns: {
                 name: string,
                 dataType: string,
+                nullable: boolean,
                 indexed: boolean
             }[]
-        }) {
+        }) { }
 
-        const createTableSQLValues = [this.config.tableName];
+    public async init() {
+        const queries: string[] = [];
+        const values = [] as (string | number)[][];
+        const rowKeyColumnName = "row_key";
+        const rowKeyColumnDataType = "serial";
+        const indexedTableSuffix = "_indexed";
+        const notnull = "not null";
+
+        //create main table
+        const createTableSQLValues = [this.config.tableName, rowKeyColumnName, rowKeyColumnDataType, notnull];
         const tableColumns = this.config.columns.reduce((acc, column) => {
-            acc += `$${createTableSQLValues.length} $${createTableSQLValues.length + 1},`;
+            if (column.name === rowKeyColumnName) throw new Error(`Column name cannot be '${rowKeyColumnName}' as it is reserved for system use.`);
             createTableSQLValues.push(column.name);
+            acc += `$${createTableSQLValues.length} `;
             createTableSQLValues.push(column.dataType);
+            acc += `$${createTableSQLValues.length} `;
+            if (column.nullable === false) {
+                createTableSQLValues.push(notnull);
+                acc += `$${createTableSQLValues.length} `;
+            }
+            acc = acc.trimEnd();
+            acc += ", ";
             return acc;
-        }, "");
-        const createTableSQL = `CREATE TABLE IF NOT EXISTS $1 (${tableColumns});`;
+        }, "$2 $3 $4, ");
+        const createTableSQL = `CREATE TABLE IF NOT EXISTS $1 (${tableColumns.substring(0, tableColumns.length - 2)});`;
+        queries.push(createTableSQL);
+        values.push(createTableSQLValues);
 
-        const createIndexedTableSQLValues = [this.config.tableName + "_indexed"];
-        const indexedTableColumns = this.config.columns.reduce((acc, column) => {
+        //create indexed table
+        if (this.config.indexedTable === true) {
+            const createIndexedTableSQLValues = [this.config.tableName + `indexedTableSuffix`, rowKeyColumnName, "integer", notnull, this.config.tableName, rowKeyColumnName];
+            const indexedTableColumns = this.config.columns.reduce((acc, column) => {
+                if (column.indexed === false) return acc;
+                createIndexedTableSQLValues.push(column.name);
+                acc += `$${createIndexedTableSQLValues.length}`;
+                createIndexedTableSQLValues.push(column.dataType);
+                acc += `$${createIndexedTableSQLValues.length}`;
+                if (column.nullable === false) {
+                    createIndexedTableSQLValues.push(notnull);
+                    acc += `$${createIndexedTableSQLValues.length}`;
+                }
+                acc += ",";
+                return acc;
+            }, "$2 $3 $4 REFERENCES $5 ($6),");
+            const createIndexedTableSQL = `CREATE TABLE IF NOT EXISTS $1 (${indexedTableColumns});`;
+            queries.push(createIndexedTableSQL);
+            values.push(createIndexedTableSQLValues);
+        }
+        //create indexes
+        const createIndexSQLValues = [this.config.tableName + "_idx"];
+        createIndexSQLValues.push(this.config.indexedTable ? (this.config.tableName + indexedTableSuffix) : (this.config.tableName));
+        createIndexSQLValues.push(rowKeyColumnName);
+        const indexedColumns = this.config.columns.reduce((acc, column) => {
             if (column.indexed === false) return acc;
-            acc += `$${createIndexedTableSQLValues.length} $${createTableSQLValues.length + 1},`;
-            createTableSQLValues.push(column.name);
-            createTableSQLValues.push(column.dataType);
+            acc += `$${createIndexSQLValues.length},`;
+            createIndexSQLValues.push(column.name);
             return acc;
-        }, "");
-        const createIndexedTableSQL = `CREATE TABLE IF NOT EXISTS $1 (${indexedTableColumns});`;
+        }, `$${createIndexSQLValues.length},`);
+        const createIndexSQL = `CREATE INDEX IF NOT EXISTS $1 ON $2 ( ${indexedColumns});`;
+        if (createIndexSQLValues.length > 3) {
+            queries.push(createIndexSQL);
+            values.push(createIndexSQLValues);
+        }
 
-
+        await this.queryExecutor(queries, values);
     }
 
     public async upsert(row: IIndexableValue<unknown>[], rowId?: number) {
@@ -58,10 +105,12 @@ export class PGICD implements IIndexedColumnDictionary {
     }
 
     public async get(rowId: number): Promise<IIndexableValue<unknown>[] | undefined> {
+        return undefined
         // return this.table.get(rowId);
     }
 
     public async getByIndexedColumn<T>(indexCol: number, indexKey: string, mapper: (keys: Set<number>) => Promise<T>): Promise<T | undefined> {
+        return undefined
         // const keys = this.indexes.get(indexCol)?.get(indexKey);
         // if (keys === undefined) {
         //     return undefined;
