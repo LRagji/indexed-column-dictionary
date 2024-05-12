@@ -28,8 +28,17 @@ describe("IndexedTable", () => {
 
         assert.strictEqual(queryExecutorStub.calledOnce, true);
         assert.strictEqual(queryExecutorStub.firstCall.args.length, 2);
+        assert.strictEqual(queryExecutorStub.firstCall.firstArg.length, 3);
+        assert.strictEqual(queryExecutorStub.firstCall.lastArg.length, 3);
+
         assert.strictEqual(queryExecutorStub.firstCall.firstArg[0], "CREATE TABLE IF NOT EXISTS $1 ($2 $3 $4, $5 $6 $7, $8 $9 $10);");
         assert.deepEqual(queryExecutorStub.firstCall.lastArg[0], ["test", "row_key", "serial", "not null", "column1", "text", "not null", "column2", "text", "not null"]);
+
+        assert.strictEqual(queryExecutorStub.firstCall.firstArg[1], "CREATE TABLE IF NOT EXISTS $1 ($2 $3 $4 REFERENCES $5 ($6), $7 $8 $9, $10 $11 $12);");
+        assert.deepEqual(queryExecutorStub.firstCall.lastArg[1], ["test_indexed", "row_key", "integer", "not null", "test", "row_key", "column1", "text", "not null", "column2", "text", "not null"]);
+
+        assert.strictEqual(queryExecutorStub.firstCall.firstArg[2], "CREATE INDEX IF NOT EXISTS $1 ON $2 ($3, $4, $5);");
+        assert.deepEqual(queryExecutorStub.firstCall.lastArg[2], ["test_idx", "test_indexed", "row_key", "column1", "column2"]);
     });
     // it("should insert a row and retrieve it by index", async () => {
     //     const row1: IIndexableValue<string>[] = [{ IndexValue: "key1", Data: "D1" }, { IndexValue: "key2", Data: "D2" }];

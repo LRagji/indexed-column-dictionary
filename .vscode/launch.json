@@ -32,6 +32,22 @@
             "outFiles": [
                 "${workspaceFolder}/dist/test/**/*.js"
             ]
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "args": [
+                "--test"
+            ],
+            "name": "Debug E2E",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "program": "${workspaceFolder}/e2e/pg-icd-e2e.ts",
+            "preLaunchTask": "npm: build",
+            "outFiles": [
+                "${workspaceFolder}/dist/e2e/**/*.js"
+            ]
         }
     ]
 }

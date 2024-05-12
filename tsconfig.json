@@ -100,7 +100,8 @@
   },
   "include": [
     "src/**/*.ts",
-    "test/**/*.ts"
+    "test/**/*.ts",
+    "e2e/**/*.ts"
   ],
   "exclude": [
     "dist",

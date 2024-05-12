@@ -12,7 +12,9 @@
     "build": "npm run clean-build && npm run copy-files",
     "start": "npm run build && node -r dotenv/config dist/src/index.js ./.env",
     "test": "npm run build && nyc --all --reporter=lcov --reporter=text --exclude=src/index.ts --exclude=test/** --exclude=coverage/** node --test ./dist/test",
-    "push": "npm whoami && npm version patch && npm test && cd ./dist && npm publish && cd .. && git push --tags"
+    "push": "npm whoami && npm version patch && npm test && cd ./dist && npm publish && cd .. && git push --tags",
+    "pg": "docker run --name some-postgres -e POSTGRES_DB=test -e POSTGRES_USER=test -e POSTGRES_PASSWORD=test  -d postgres",
+    "e2e": "npm run build && nyc --all --reporter=lcov --reporter=text --exclude=src/index.ts --exclude=coverage/** --exclude=test/** node --test ./dist/e2e"
   },
   "keywords": [],
   "author": "Laukik",
@@ -27,9 +29,9 @@
     "copyfiles": "^2.4.1",
     "dotenv": "^16.4.5",
     "nyc": "^15.1.0",
+    "pg-promise": "^11.6.0",
     "rimraf": "^5.0.5",
     "sinon": "^17.0.1",
     "typescript": "^5.4.5"
-  },
-  "dependencies": {}
+  }
 }
