@@ -1,6 +1,6 @@
 {
   "name": "indexed-column-dictionary",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "A data struture which represents a table with indexing and sorting options for its columns",
   "main": "dist/src/index.js",
   "directories": {
