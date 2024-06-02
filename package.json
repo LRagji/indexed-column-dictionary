@@ -1,8 +1,8 @@
 {
   "name": "indexed-column-dictionary",
   "version": "0.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "A data struture which represents a table with indexing and sorting options for its columns",
+  "main": "dist/src/index.js",
   "directories": {
     "test": "test"
   },
@@ -27,11 +27,16 @@
     "@types/node": "^20.12.7",
     "@types/sinon": "^17.0.3",
     "copyfiles": "^2.4.1",
-    "dotenv": "^16.4.5",
     "nyc": "^15.1.0",
     "pg-promise": "^11.6.0",
     "rimraf": "^5.0.5",
     "sinon": "^17.0.1",
     "typescript": "^5.4.5"
-  }
+  },
+  "files": [
+    "dist/src/**",
+    "dist/package.json",
+    "license.md",
+    "README.md"
+  ]
 }

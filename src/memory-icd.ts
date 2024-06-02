@@ -38,6 +38,21 @@ export class MemoryICD implements IIndexedColumnDictionary {
         return mapper(keys);
     }
 
+    public async *getBySortedIndexedColumn<T>(indexCol: number, sortFunction: (a: string, b: string) => number, mapper: (keys: Set<number>) => Promise<T>): AsyncGenerator<T, void, void> {
+        const keys = this.indexes.get(indexCol);
+        if (keys === undefined) {
+            return;
+        }
+        const sortedKeys = Array.from(keys.keys()).sort(sortFunction);
+        for (const key of sortedKeys) {
+            const rowIds = keys.get(key);
+            if (rowIds !== undefined) {
+                yield mapper(rowIds);
+            }
+        }
+    }
+
+
     public async *getAll(indicativeSize: number = 1): AsyncGenerator<[number, IIndexableValue<unknown>[]][], void, void> {
         let returnArray = new Array<[number, IIndexableValue<unknown>[]]>();
         for (const [key, values] of this.table) {

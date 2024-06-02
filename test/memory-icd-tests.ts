@@ -49,4 +49,22 @@ describe("IndexedTable", () => {
         assert.strictEqual(result.get(2), row2);
 
     });
+
+    it("should sort rows for a given index", async () => {
+        const row1: IIndexableValue<string>[] = [{ IndexValue: "1000", Data: "D1" }, { IndexValue: "2", Data: "D2" }];
+        const row2: IIndexableValue<string>[] = [{ IndexValue: "1", Data: "D3" }, { IndexValue: "3", Data: "D4" }];
+        await indexedTable.upsert(row1, 1);
+        await indexedTable.upsert(row2, 2);
+
+        const result = new Array<Set<number>>();
+        for await (const resultArray of indexedTable.getBySortedIndexedColumn<Set<number>>(0, (a, b) => parseInt(a) - parseInt(b), (keys: Set<number>) => Promise.resolve(keys))) {
+            result.push(resultArray);
+        }
+
+        assert.strictEqual(result.length, 2);
+        assert.strictEqual(result[0].size, 1);
+        assert.strictEqual(result[1].size, 1);
+        assert.strictEqual(result[0].has(2), true);
+        assert.strictEqual(result[1].has(1), true);
+    });
 });

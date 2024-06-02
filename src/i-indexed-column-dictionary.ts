@@ -30,6 +30,14 @@ export interface IIndexedColumnDictionary {
     getByIndexedColumn<MapperReturnType>(indexColNumber: number, indexValue: string, mapper: (keys: Set<number>) => Promise<MapperReturnType>): Promise<MapperReturnType | undefined>;
 
     /**
+     * Retrieves the values associated with the given indexed column, sorted by the index value,
+     * @param indexCol The number of the indexed column.
+     * @param sortFunction The function to sort the indexed values.
+     * @param mapper The mapper function to apply to the resulting indexed values.
+     */
+    getBySortedIndexedColumn<T>(indexCol: number, sortFunction: (a: string, b: string) => number, mapper: (keys: Set<number>) => Promise<T>): AsyncGenerator<T, void, void>;
+
+    /**
      * Retrieves all key-value pairs in the dictionary.
      * @param indicativeSize - An indicative size to control the number of key-value pairs returned.
      * @returns An async generator that yields key-value pairs.
